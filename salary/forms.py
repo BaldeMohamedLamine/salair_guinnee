@@ -1,0 +1,146 @@
+from django import forms
+
+class NetToGrossForm(forms.Form):
+    # Nom complet de l'employé
+    nom_complet = forms.CharField(
+        label="Nom complet de l'employé",
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 
+            'placeholder': 'Prénom et nom de famille',
+            'required': True
+        }),
+        help_text="Saisissez le prénom et nom de famille de l'employé"
+    )
+    
+    # Salaire net souhaité
+    net_salary = forms.DecimalField(
+        label="Salaire net souhaité",
+        min_value=0,
+        decimal_places=2,
+        max_digits=12,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Entrez le salaire net souhaité'})
+    )
+    
+    # Question sur les primes exonérées
+    has_exempt_primes = forms.BooleanField(
+        label="Avez-vous des primes exonérées ?",
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'id': 'has_exempt_primes'})
+    )
+    
+    # Primes exonérées (non taxables)
+    prime_retraite = forms.BooleanField(
+        label="Prime de retraite",
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input exempt-prime', 'disabled': True})
+    )
+    
+    prime_interim = forms.BooleanField(
+        label="Prime d'intérim",
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input exempt-prime', 'disabled': True})
+    )
+    
+    prime_anciennete = forms.BooleanField(
+        label="Prime d'ancienneté",
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input exempt-prime', 'disabled': True})
+    )
+    
+    # Primes taxables (calculées automatiquement)
+    prime_cherte_vie = forms.DecimalField(
+        label="Prime de cherté de vie - Calculée automatiquement",
+        min_value=0,
+        decimal_places=2,
+        max_digits=12,
+        required=False,
+        initial=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'style': 'background-color: #f8f9fa;'})
+    )
+    
+    prime_craie = forms.DecimalField(
+        label="Prime de craie - Calculée automatiquement",
+        min_value=0,
+        decimal_places=2,
+        max_digits=12,
+        required=False,
+        initial=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'style': 'background-color: #f8f9fa;'})
+    )
+    
+    indemnite_logement = forms.DecimalField(
+        label="Indemnité de logement - Calculée automatiquement",
+        min_value=0,
+        decimal_places=2,
+        max_digits=12,
+        required=False,
+        initial=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'style': 'background-color: #f8f9fa;'})
+    )
+    
+    indemnite_transport = forms.DecimalField(
+        label="Indemnité de transport - Calculée automatiquement",
+        min_value=0,
+        decimal_places=2,
+        max_digits=12,
+        required=False,
+        initial=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'style': 'background-color: #f8f9fa;'})
+    )
+    
+    indemnite_repas = forms.DecimalField(
+        label="Indemnité de repas/panier - Calculée automatiquement",
+        min_value=0,
+        decimal_places=2,
+        max_digits=12,
+        required=False,
+        initial=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'style': 'background-color: #f8f9fa;'})
+    )
+    
+    autre_gratification = forms.DecimalField(
+        label="Autre gratification - Calculée automatiquement",
+        min_value=0,
+        decimal_places=2,
+        max_digits=12,
+        required=False,
+        initial=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'style': 'background-color: #f8f9fa;'})
+    )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Calculer le total des primes taxables
+        # Gérer les valeurs None en les convertissant en 0
+        prime_cherte_vie = cleaned_data.get('prime_cherte_vie') or 0
+        prime_craie = cleaned_data.get('prime_craie') or 0
+        indemnite_logement = cleaned_data.get('indemnite_logement') or 0
+        indemnite_transport = cleaned_data.get('indemnite_transport') or 0
+        indemnite_repas = cleaned_data.get('indemnite_repas') or 0
+        autre_gratification = cleaned_data.get('autre_gratification') or 0
+        
+        primes_taxables = (
+            prime_cherte_vie +
+            prime_craie +
+            indemnite_logement +
+            indemnite_transport +
+            indemnite_repas +
+            autre_gratification
+        )
+        
+        # Calculer le total des primes exonérées
+        prime_retraite = cleaned_data.get('prime_retraite') or 0
+        prime_interim = cleaned_data.get('prime_interim') or 0
+        prime_anciennete = cleaned_data.get('prime_anciennete') or 0
+        
+        primes_exonerees = (
+            prime_retraite +
+            prime_interim +
+            prime_anciennete
+        )
+        
+        cleaned_data['primes_taxables'] = primes_taxables
+        cleaned_data['primes_exonerees'] = primes_exonerees
+        return cleaned_data
