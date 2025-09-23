@@ -20,3 +20,13 @@ def format_currency(value):
     """Formate un nombre avec des espaces et ajoute 'GNF'"""
     formatted = format_number(value)
     return f"{formatted} GNF"
+
+@register.filter
+def abs_value(value):
+    """Retourne la valeur absolue d'un nombre"""
+    if value is None:
+        return 0
+    try:
+        return abs(float(value))
+    except (ValueError, TypeError):
+        return 0

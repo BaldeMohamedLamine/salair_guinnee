@@ -40,7 +40,15 @@
 <body class="bg-light">
 <div class="container py-5">
            <div class="header-gradient text-center">
-               <h1 class="mb-3">🏢 Calculateur de Salaires Guinée</h1>
+               <div class="d-flex justify-content-center align-items-center mb-3">
+                   {% if company_logo %}
+                       <img src="{{ company_logo }}" alt="{{ company_name }}" class="me-3" style="max-height: 60px; max-width: 200px; object-fit: contain;">
+                   {% endif %}
+                   <div>
+                       <h1 class="mb-0">{{ company_name }}</h1>
+                       <small class="opacity-75">Calculateur de Salaires Guinée</small>
+                   </div>
+               </div>
                <p class="mb-0">Calculs conformes aux règles fiscales et sociales guinéennes</p>
                <small>💡 Saisissez uniquement le salaire net souhaité - Le système propose automatiquement les autres valeurs</small>
            </div>
@@ -214,6 +222,24 @@
                        </small>
                    </div>
             
+            <!-- Section Déductions -->
+            <div class="mt-4 p-3" style="background-color: #fff3cd; border: 2px solid #ffc107; border-radius: 10px;">
+                <h6 class="fw-bold mb-3 text-warning">💸 Déductions pour le Salaire Net à Payer</h6>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Avance sur salaire :</label>
+                        {{ form.avance_salaire }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Saisie et opposition :</label>
+                        {{ form.saisie_opposition }}
+                    </div>
+                </div>
+                <small class="text-muted">
+                    <strong>💡 Note :</strong> Ces montants seront déduits du salaire net pour calculer le salaire net à payer.
+                </small>
+            </div>
+            
             <button type="submit" class="btn btn-primary w-100 btn-lg mt-4">
                 🧮 Calculer le Salaire de Base
             </button>
@@ -224,10 +250,10 @@
     <div class="card result-gradient shadow p-4 mt-4">
         <h4 class="text-center mb-4">📊 Résultat du Calcul Complet</h4>
         
-        <!-- Salaires de base -->
+        <!-- Première ligne : Salaire de base, Primes, Salaire brut, Salaire imposable -->
         <div class="row mb-4">
             <div class="col-12">
-                <h6 class="fw-bold mb-3 text-center">💰 Salaires</h6>
+                <h6 class="fw-bold mb-3 text-center">💰 Calculs Principaux</h6>
                 <div class="row text-center">
                     <div class="col-md-3">
                         <div class="card bg-light">
@@ -240,7 +266,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light">
                             <div class="card-body">
-                                <h6 class="card-title">Les Primes</h6>
+                                <h6 class="card-title">📊 Détails des Primes</h6>
                                 <div class="text-start">
                                     <div class="mb-2">
                                         <small class="text-muted">Total Primes Non Exonérées :</small><br>
@@ -261,17 +287,62 @@
                     <div class="col-md-3">
                         <div class="card bg-light">
                             <div class="card-body">
-                                <h6 class="card-title">Salaire Imposable</h6>
-                                <h4 class="text-warning">{{ result.imposable|format_currency }}</h4>
-                                <small class="text-muted">Brut - CNSS + Écart</small>
+                                <h6 class="card-title">Salaire Brut</h6>
+                                <h4 class="text-info">{{ result.gross|format_currency }}</h4>
+                                <small class="text-muted">Base + Toutes les Primes</small>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card bg-light">
                             <div class="card-body">
+                                <h6 class="card-title">Salaire Imposable</h6>
+                                <h4 class="text-warning">{{ result.imposable|format_currency }}</h4>
+                                <small class="text-muted">Brut - CNSS + Écart</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Deuxième ligne : Salaire net, Déductions, Net à payer -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h6 class="fw-bold mb-3 text-center">💸 Salaire Net et Déductions</h6>
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
                                 <h6 class="card-title">Salaire Net</h6>
-                                <h4 class="text-info">{{ result.net|format_currency }}</h4>
+                                <h4 class="text-success">{{ result.net|format_currency }}</h4>
+                                <small class="text-muted">Imposable - RTS</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">💸 Déductions</h6>
+                                <div class="text-start">
+                                    <div class="mb-2">
+                                        <small class="text-muted">Avance sur salaire :</small><br>
+                                        <strong class="text-warning">{{ avance_salaire|abs_value|format_currency }}</strong>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">Saisie et opposition :</small><br>
+                                        <strong class="text-warning">{{ saisie_opposition|abs_value|format_currency }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">💰 Net à Payer</h6>
+                                <h4 class="text-primary">{{ salaire_net_a_payer|format_currency }}</h4>
+                                <small class="text-muted">Net - Déductions</small>
                             </div>
                         </div>
                     </div>
@@ -356,26 +427,24 @@
                 <h6 class="fw-bold mb-3">📋 Informations Supplémentaires</h6>
                 <ul class="list-group">
                     <li class="list-group-item d-flex justify-content-between">
-                        <span>Salaire Imposable</span>
-                        <strong>{{ result.imposable|floatformat:0 }} GNF</strong>
+                        <span>Salaire Brut</span>
+                        <strong>{{ result.gross|format_currency }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Total Primes Exonérées</span>
+                        <strong>{{ result.primes_exonerees|format_currency }}</strong>
                     </li>
                     <li class="list-group-item d-flex justify-content-between">
                         <span>Écart Imposable</span>
-                        <strong>{{ result.ecart_imposable|floatformat:0 }} GNF</strong>
+                        <strong>{{ result.ecart_imposable|format_currency }}</strong>
                     </li>
-                    {% if result.primes_taxables_25 %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>Primes taxables 25%</span>
-                        <strong>{{ result.primes_taxables_25|floatformat:0 }} GNF</strong>
-                    </li>
-                    {% endif %}
                 </ul>
             </div>
             <div class="col-md-6">
                 <h6 class="fw-bold mb-3">💡 Règles Appliquées</h6>
                 <div class="alert alert-info">
                     <small>
-                        <strong>Règle des 25% :</strong> Si les primes taxables dépassent 25% du salaire brut, 
+                        <strong>Règle des 25% :</strong> Si les primes Exonérées dépassent 25% du salaire brut, 
                         la différence devient l'écart imposable.<br>
                         <strong>Base imposable :</strong> Salaire brut - CNSS + Écart imposable
                     </small>

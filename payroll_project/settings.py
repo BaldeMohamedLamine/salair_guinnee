@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -63,6 +64,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'salary.context_processors.company_info',
             ],
         },
     },
@@ -141,3 +143,7 @@ DEFAULT_FROM_EMAIL = 'Système de Paie <noreply@Mon-domaine.com>'
 LOGIN_URL = '/auth/login/'
 LOGIN_REDIRECT_URL = '/salaire/'
 LOGOUT_REDIRECT_URL = '/auth/login/'
+
+# Configuration des fichiers média
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

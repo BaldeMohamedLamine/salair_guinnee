@@ -109,6 +109,27 @@ class NetToGrossForm(forms.Form):
         widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'style': 'background-color: #f8f9fa;'})
     )
     
+    # Déductions pour le salaire net à payer
+    avance_salaire = forms.DecimalField(
+        label="Avance sur salaire",
+        min_value=0,
+        decimal_places=2,
+        max_digits=12,
+        required=False,
+        initial=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+    
+    saisie_opposition = forms.DecimalField(
+        label="Saisie et opposition",
+        min_value=0,
+        decimal_places=2,
+        max_digits=12,
+        required=False,
+        initial=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+    
     def clean(self):
         cleaned_data = super().clean()
         
@@ -141,6 +162,24 @@ class NetToGrossForm(forms.Form):
             prime_anciennete
         )
         
+        # Calculer le salaire net à payer
+        avance_salaire = cleaned_data.get('avance_salaire') or 0
+        saisie_opposition = cleaned_data.get('saisie_opposition') or 0
+        salaire_net = cleaned_data.get('net_salary') or 0  # Corriger le nom du champ
+        
+        # S'assurer que les valeurs sont des nombres
+        try:
+            avance_salaire = float(avance_salaire) if avance_salaire else 0
+            saisie_opposition = float(saisie_opposition) if saisie_opposition else 0
+            salaire_net = float(salaire_net) if salaire_net else 0
+        except (ValueError, TypeError):
+            avance_salaire = 0
+            saisie_opposition = 0
+            salaire_net = 0
+        
+        salaire_net_a_payer = salaire_net - (avance_salaire + saisie_opposition)
+        
         cleaned_data['primes_taxables'] = primes_taxables
         cleaned_data['primes_exonerees'] = primes_exonerees
+        cleaned_data['salaire_net_a_payer'] = salaire_net_a_payer
         return cleaned_data

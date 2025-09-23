@@ -4,7 +4,8 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django import forms
-from .models import User, Employee
+from django.shortcuts import redirect
+from .models import User, Employee, Company
 from .auth_views import send_user_credentials
 
 class CustomUserCreationForm(forms.ModelForm):
@@ -171,3 +172,46 @@ class EmployeeAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """Optimiser les requêtes"""
         return super().get_queryset(request)
+
+@admin.register(Company)
+class CompanyAdmin(admin.ModelAdmin):
+    """Administration pour le modèle Company"""
+    list_display = ('name', 'has_logo', 'phone', 'email', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('name', 'email', 'phone')
+    
+    fieldsets = (
+        ('Informations générales', {
+            'fields': ('name', 'logo')
+        }),
+        ('Contact', {
+            'fields': ('address', 'phone', 'email')
+        }),
+    )
+    
+    def has_logo(self, obj):
+        """Affiche si l'entreprise a un logo"""
+        if obj.logo:
+            return format_html(
+                '<span style="color: #27ae60; font-weight: bold;">✅ Logo présent</span>'
+            )
+        else:
+            return format_html(
+                '<span style="color: #e74c3c; font-weight: bold;">❌ Aucun logo</span>'
+            )
+    has_logo.short_description = 'Logo'
+    
+    def has_add_permission(self, request):
+        """Empêche l'ajout de plusieurs instances"""
+        return not Company.objects.exists()
+    
+    def has_delete_permission(self, request, obj=None):
+        """Empêche la suppression de l'instance"""
+        return False
+    
+    def changelist_view(self, request, extra_context=None):
+        """Redirige vers la modification si une instance existe"""
+        if Company.objects.exists():
+            company = Company.objects.first()
+            return redirect(f'../company/{company.id}/change/')
+        return super().changelist_view(request, extra_context)

@@ -93,7 +93,11 @@ def net_to_gross_view(request):
                         prime_interim=exempt_primes_amounts.get('prime_interim', 0),
                         prime_anciennete=exempt_primes_amounts.get('prime_anciennete', 0),
                         primes_exonerees=primes_exonerees,
-                        ecart_imposable=result['ecart_imposable']
+                        ecart_imposable=result['ecart_imposable'],
+                        # Déductions pour le salaire net à payer
+                        avance_salaire=form.cleaned_data.get('avance_salaire', 0),
+                        saisie_opposition=form.cleaned_data.get('saisie_opposition', 0),
+                        salaire_net_a_payer=form.cleaned_data.get('salaire_net_a_payer', 0)
                     )
                     
                     messages.success(request, f"✅ Employé '{nom_complet}' ajouté avec succès !")
@@ -105,13 +109,30 @@ def net_to_gross_view(request):
     else:
         form = NetToGrossForm()
 
-    return render(request, "salary/index.html", {
+    # Préparer les données pour l'affichage
+    context = {
         "form": form, 
         "result": result,
         "primes_auto": primes_auto,
         "exempt_primes_amounts": exempt_primes_amounts if 'exempt_primes_amounts' in locals() else {},
         "employees": employees
-    })
+    }
+    
+    # Ajouter les valeurs des déductions si le formulaire est valide et qu'il y a un résultat
+    if result and hasattr(form, 'cleaned_data') and form.cleaned_data:
+        context.update({
+            "avance_salaire": form.cleaned_data.get('avance_salaire', 0),
+            "saisie_opposition": form.cleaned_data.get('saisie_opposition', 0),
+            "salaire_net_a_payer": form.cleaned_data.get('salaire_net_a_payer', 0)
+        })
+    else:
+        context.update({
+            "avance_salaire": 0,
+            "saisie_opposition": 0,
+            "salaire_net_a_payer": 0
+        })
+    
+    return render(request, "salary/index.html", context)
 
 @login_required
 def export_excel_view(request):
@@ -155,8 +176,12 @@ def export_excel_view(request):
         "Total Charges Employé", "Total CNSS Patronal",
         # 11. Versement forfaitaire et taxe d'apprentissage
         "Versement Forfaitaire", "Taxe Apprentissage",
-        # 12. Salaire net (dernière colonne)
-        "Salaire Net"
+        # 12. Salaire net
+        "Salaire Net",
+        # 13. Déductions
+        "Avance sur Salaire", "Saisie et Opposition",
+        # 14. Salaire net à payer (dernière colonne)
+        "Salaire Net à Payer"
     ]
     
     # Écrire les en-têtes
@@ -271,8 +296,20 @@ def export_excel_view(request):
         ws.cell(row=row, column=col, value=float(employee.taxe_apprentissage))
         col += 1
         
-        # 12. Salaire Net (dernière colonne)
+        # 12. Salaire Net
         ws.cell(row=row, column=col, value=float(employee.salaire_net))
+        col += 1
+        
+        # 13. Avance sur salaire
+        ws.cell(row=row, column=col, value=float(employee.avance_salaire))
+        col += 1
+        
+        # 14. Saisie et opposition
+        ws.cell(row=row, column=col, value=float(employee.saisie_opposition))
+        col += 1
+        
+        # 15. Salaire Net à Payer (dernière colonne)
+        ws.cell(row=row, column=col, value=float(employee.salaire_net_a_payer))
     
     # Ajuster la largeur des colonnes
     for col in range(1, len(headers) + 1):

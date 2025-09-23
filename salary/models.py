@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 import secrets
 import string
+import os
 
 class CustomUserManager(BaseUserManager):
     """Gestionnaire personnalisé pour le modèle User"""
@@ -99,6 +100,12 @@ class Employee(models.Model):
     nom_complet = models.CharField(max_length=200, verbose_name="Nom complet de l'employé")
     date_creation = models.DateTimeField(default=timezone.now, verbose_name="Date de création")
     salaire_net = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Salaire net souhaité")
+    
+    # Déductions pour le salaire net à payer
+    avance_salaire = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Avance sur salaire", default=0)
+    saisie_opposition = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Saisie et opposition", default=0)
+    salaire_net_a_payer = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Salaire net à payer", default=0)
+    
     salaire_base = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Salaire de base calculé")
     salaire_brut = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Salaire brut calculé")
     salaire_imposable = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Salaire imposable calculé")
@@ -143,3 +150,47 @@ class Employee(models.Model):
         from .utils import calculate_rts_detailed
         _, details = calculate_rts_detailed(self.salaire_imposable)
         return details
+
+def logo_upload_path(instance, filename):
+    """Génère le chemin de téléchargement pour le logo"""
+    ext = filename.split('.')[-1]
+    filename = f"logo.{ext}"
+    return os.path.join('company', filename)
+
+class Company(models.Model):
+    """Modèle pour les informations de l'entreprise"""
+    name = models.CharField(max_length=200, verbose_name="Nom de l'entreprise", default="Mon Entreprise")
+    logo = models.ImageField(
+        upload_to=logo_upload_path,
+        verbose_name="Logo de l'entreprise",
+        help_text="Téléchargez le logo de votre entreprise (PNG, JPG, JPEG recommandés)",
+        blank=True,
+        null=True
+    )
+    address = models.TextField(verbose_name="Adresse", blank=True)
+    phone = models.CharField(max_length=20, verbose_name="Téléphone", blank=True)
+    email = models.EmailField(verbose_name="Email", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Date de création")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Dernière modification")
+    
+    class Meta:
+        verbose_name = "Entreprise"
+        verbose_name_plural = "Entreprises"
+    
+    def __str__(self):
+        return self.name
+    
+    def save(self, *args, **kwargs):
+        # S'assurer qu'il n'y a qu'une seule instance de Company
+        if not self.pk and Company.objects.exists():
+            # Si c'est une nouvelle instance et qu'il en existe déjà une, ne pas créer
+            return
+        super().save(*args, **kwargs)
+    
+    @classmethod
+    def get_company(cls):
+        """Retourne l'instance unique de Company ou en crée une"""
+        company, created = cls.objects.get_or_create(
+            defaults={'name': 'Mon Entreprise'}
+        )
+        return company
