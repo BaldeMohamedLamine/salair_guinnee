@@ -33,11 +33,9 @@ def net_to_gross_view(request):
             # Calculer le total des primes taxables
             primes_taxables = (
                 primes_auto['prime_cherte_vie'] +
-                primes_auto['prime_craie'] +
                 primes_auto['indemnite_logement'] +
                 primes_auto['indemnite_transport'] +
-                primes_auto['indemnite_repas'] +
-                primes_auto['autre_gratification']
+                primes_auto['indemnite_repas']
             )
             
             # Calculer les primes exonérées si sélectionnées
@@ -82,11 +80,9 @@ def net_to_gross_view(request):
                         total_cnss_patronal=result['total_cnss_patronal'],
                         # Primes taxables détaillées
                         prime_cherte_vie=primes_auto['prime_cherte_vie'],
-                        prime_craie=primes_auto['prime_craie'],
                         indemnite_logement=primes_auto['indemnite_logement'],
                         indemnite_transport=primes_auto['indemnite_transport'],
                         indemnite_repas=primes_auto['indemnite_repas'],
-                        autre_gratification=primes_auto['autre_gratification'],
                         primes_taxables=primes_taxables,
                         # Primes exonérées
                         prime_retraite=exempt_primes_amounts.get('prime_retraite', 0),
@@ -156,8 +152,8 @@ def export_excel_view(request):
         # 2. Salaire de base
         "Salaire Base",
         # 3. Toutes les primes (exonérées et non exonérées)
-        "Prime Cherté de Vie", "Prime Craie", "Indemnité Logement", 
-        "Indemnité Transport", "Indemnité Repas", "Autre Gratification",
+        "Prime Cherté de Vie", "Indemnité Logement", 
+        "Indemnité Transport", "Indemnité Repas",
         "Prime Retraite", "Prime Intérim", "Prime Ancienneté",
         # 4. Salaire brut
         "Salaire Brut",
@@ -206,15 +202,11 @@ def export_excel_view(request):
         # 3. Toutes les primes (non exonérées d'abord)
         ws.cell(row=row, column=col, value=float(employee.prime_cherte_vie))
         col += 1
-        ws.cell(row=row, column=col, value=float(employee.prime_craie))
-        col += 1
         ws.cell(row=row, column=col, value=float(employee.indemnite_logement))
         col += 1
         ws.cell(row=row, column=col, value=float(employee.indemnite_transport))
         col += 1
         ws.cell(row=row, column=col, value=float(employee.indemnite_repas))
-        col += 1
-        ws.cell(row=row, column=col, value=float(employee.autre_gratification))
         col += 1
         
         # Primes exonérées

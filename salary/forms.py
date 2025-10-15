@@ -59,15 +59,6 @@ class NetToGrossForm(forms.Form):
         widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'style': 'background-color: #f8f9fa;'})
     )
     
-    prime_craie = forms.DecimalField(
-        label="Prime de craie - Calculée automatiquement",
-        min_value=0,
-        decimal_places=2,
-        max_digits=12,
-        required=False,
-        initial=0,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'style': 'background-color: #f8f9fa;'})
-    )
     
     indemnite_logement = forms.DecimalField(
         label="Indemnité de logement - Calculée automatiquement",
@@ -99,15 +90,6 @@ class NetToGrossForm(forms.Form):
         widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'style': 'background-color: #f8f9fa;'})
     )
     
-    autre_gratification = forms.DecimalField(
-        label="Autre gratification - Calculée automatiquement",
-        min_value=0,
-        decimal_places=2,
-        max_digits=12,
-        required=False,
-        initial=0,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'style': 'background-color: #f8f9fa;'})
-    )
     
     # Déductions pour le salaire net à payer
     avance_salaire = forms.DecimalField(
@@ -136,19 +118,15 @@ class NetToGrossForm(forms.Form):
         # Calculer le total des primes taxables
         # Gérer les valeurs None en les convertissant en 0
         prime_cherte_vie = cleaned_data.get('prime_cherte_vie') or 0
-        prime_craie = cleaned_data.get('prime_craie') or 0
         indemnite_logement = cleaned_data.get('indemnite_logement') or 0
         indemnite_transport = cleaned_data.get('indemnite_transport') or 0
         indemnite_repas = cleaned_data.get('indemnite_repas') or 0
-        autre_gratification = cleaned_data.get('autre_gratification') or 0
         
         primes_taxables = (
             prime_cherte_vie +
-            prime_craie +
             indemnite_logement +
             indemnite_transport +
-            indemnite_repas +
-            autre_gratification
+            indemnite_repas
         )
         
         # Calculer le total des primes exonérées

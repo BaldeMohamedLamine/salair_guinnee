@@ -301,43 +301,33 @@ def calculate_primes_automatiques(net_salary):
 
     if net_salary <= 200000:  # Petits salaires
         prime_cherte_vie = net_salary * 0.03
-        prime_craie = net_salary * 0.02
         indemnite_logement = net_salary * 0.05
         indemnite_transport = net_salary * 0.03
         indemnite_repas = net_salary * 0.02
-        autre_gratification = net_salary * 0.01
 
     elif net_salary <= 500000:  # Salaires moyens
         prime_cherte_vie = net_salary * 0.04
-        prime_craie = net_salary * 0.025
         indemnite_logement = net_salary * 0.06
         indemnite_transport = net_salary * 0.04
         indemnite_repas = net_salary * 0.03
-        autre_gratification = net_salary * 0.015
 
     elif net_salary <= 1000000:  # Salaires élevés
         prime_cherte_vie = net_salary * 0.05
-        prime_craie = net_salary * 0.03
         indemnite_logement = net_salary * 0.08
         indemnite_transport = net_salary * 0.05
         indemnite_repas = net_salary * 0.04
-        autre_gratification = net_salary * 0.02
 
     else:  # Très hauts salaires
         prime_cherte_vie = net_salary * 0.06
-        prime_craie = net_salary * 0.035
         indemnite_logement = net_salary * 0.10
         indemnite_transport = net_salary * 0.06
         indemnite_repas = net_salary * 0.05
-        autre_gratification = net_salary * 0.025
 
     return {
         'prime_cherte_vie': round(prime_cherte_vie, 2),
-        'prime_craie': round(prime_craie, 2),
         'indemnite_logement': round(indemnite_logement, 2),
         'indemnite_transport': round(indemnite_transport, 2),
         'indemnite_repas': round(indemnite_repas, 2),
-        'autre_gratification': round(autre_gratification, 2),
     }
 
 

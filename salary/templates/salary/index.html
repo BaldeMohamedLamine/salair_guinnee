@@ -185,12 +185,6 @@
                                </div>
                            </div>
                            <div class="col-md-6 mb-3">
-                               <label class="form-label">Prime de craie :</label>
-                               <div class="form-control" style="background-color: #e8f5e8; border: 2px solid #28a745;">
-                                   <span data-prime="prime_craie">{% if primes_auto %}{{ primes_auto.prime_craie|format_currency }}{% else %}Calculé automatiquement{% endif %}</span>
-                               </div>
-                           </div>
-                           <div class="col-md-6 mb-3">
                                <label class="form-label">Indemnité de logement :</label>
                                <div class="form-control" style="background-color: #e8f5e8; border: 2px solid #28a745;">
                                    <span data-prime="indemnite_logement">{% if primes_auto %}{{ primes_auto.indemnite_logement|format_currency }}{% else %}Calculé automatiquement{% endif %}</span>
@@ -206,12 +200,6 @@
                                <label class="form-label">Indemnité de repas/panier :</label>
                                <div class="form-control" style="background-color: #e8f5e8; border: 2px solid #28a745;">
                                    <span data-prime="indemnite_repas">{% if primes_auto %}{{ primes_auto.indemnite_repas|format_currency }}{% else %}Calculé automatiquement{% endif %}</span>
-                               </div>
-                           </div>
-                           <div class="col-md-6 mb-3">
-                               <label class="form-label">Autre gratification :</label>
-                               <div class="form-control" style="background-color: #e8f5e8; border: 2px solid #28a745;">
-                                   <span data-prime="autre_gratification">{% if primes_auto %}{{ primes_auto.autre_gratification|format_currency }}{% else %}Calculé automatiquement{% endif %}</span>
                                </div>
                            </div>
                        </div>
@@ -269,16 +257,16 @@
                                 <h6 class="card-title">📊 Détails des Primes</h6>
                                 <div class="text-start">
                                     <div class="mb-2">
-                                        <small class="text-muted">Total Primes Non Exonérées :</small><br>
+                                        <small class="text-muted">Total Primes Taxables :</small><br>
                                         <strong class="text-warning">{{ result.primes_taxables|format_currency }}</strong>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">Total Primes Non Taxables :</small><br>
+                                        <strong class="text-success">{{ result.primes_exonerees|format_currency }}</strong>
                                     </div>
                                     <div class="mb-2">
                                         <small class="text-muted">Écart Imposable :</small><br>
                                         <strong class="text-danger">{{ result.ecart_imposable|format_currency }}</strong>
-                                    </div>
-                                    <div>
-                                        <small class="text-muted">Total Primes Exonérées :</small><br>
-                                        <strong class="text-success">{{ result.primes_exonerees|format_currency }}</strong>
                                     </div>
                                 </div>
                             </div>
@@ -570,45 +558,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function calculatePrimesAutomatiques(netSalary) {
     // Calcul des primes en pourcentage du salaire net
-    let prime_cherte_vie, prime_craie, indemnite_logement, indemnite_transport, indemnite_repas, autre_gratification;
+    let prime_cherte_vie, indemnite_logement, indemnite_transport, indemnite_repas;
     
     if (netSalary <= 200000) {  // Salaire bas
         prime_cherte_vie = netSalary * 0.03;      // 3%
-        prime_craie = netSalary * 0.02;           // 2%
         indemnite_logement = netSalary * 0.05;    // 5%
         indemnite_transport = netSalary * 0.03;   // 3%
         indemnite_repas = netSalary * 0.02;       // 2%
-        autre_gratification = netSalary * 0.01;   // 1%
     } else if (netSalary <= 500000) {  // Salaire moyen
         prime_cherte_vie = netSalary * 0.04;      // 4%
-        prime_craie = netSalary * 0.025;          // 2.5%
         indemnite_logement = netSalary * 0.06;    // 6%
         indemnite_transport = netSalary * 0.04;   // 4%
         indemnite_repas = netSalary * 0.03;       // 3%
-        autre_gratification = netSalary * 0.015;  // 1.5%
     } else if (netSalary <= 1000000) {  // Salaire élevé
         prime_cherte_vie = netSalary * 0.05;      // 5%
-        prime_craie = netSalary * 0.03;           // 3%
         indemnite_logement = netSalary * 0.08;    // 8%
         indemnite_transport = netSalary * 0.05;   // 5%
         indemnite_repas = netSalary * 0.04;       // 4%
-        autre_gratification = netSalary * 0.02;   // 2%
     } else {  // Salaire très élevé
         prime_cherte_vie = netSalary * 0.06;      // 6%
-        prime_craie = netSalary * 0.035;          // 3.5%
         indemnite_logement = netSalary * 0.10;    // 10%
         indemnite_transport = netSalary * 0.06;   // 6%
         indemnite_repas = netSalary * 0.05;       // 5%
-        autre_gratification = netSalary * 0.025;  // 2.5%
     }
     
     // Mettre à jour l'affichage des primes
     updatePrimeDisplay('prime_cherte_vie', Math.round(prime_cherte_vie));
-    updatePrimeDisplay('prime_craie', Math.round(prime_craie));
     updatePrimeDisplay('indemnite_logement', Math.round(indemnite_logement));
     updatePrimeDisplay('indemnite_transport', Math.round(indemnite_transport));
     updatePrimeDisplay('indemnite_repas', Math.round(indemnite_repas));
-    updatePrimeDisplay('autre_gratification', Math.round(autre_gratification));
 }
 
 function updatePrimeDisplay(primeType, value) {

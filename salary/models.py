@@ -118,11 +118,9 @@ class Employee(models.Model):
     total_cnss_patronal = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Total CNSS patronal")
     # Primes taxables
     prime_cherte_vie = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Prime de cherté de vie", default=0)
-    prime_craie = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Prime de craie", default=0)
     indemnite_logement = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Indemnité de logement", default=0)
     indemnite_transport = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Indemnité de transport", default=0)
     indemnite_repas = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Indemnité de repas", default=0)
-    autre_gratification = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Autre gratification", default=0)
     primes_taxables = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Primes taxables")
     
     # Primes exonérées (non taxables)
