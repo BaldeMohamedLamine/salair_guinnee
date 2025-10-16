@@ -15,7 +15,7 @@ import io
 def net_to_gross_view(request):
     result = None
     primes_auto = None
-    employees = Employee.objects.all()[:10]  # Derniers 10 employés pour affichage
+    employees = Employee.objects.filter(user=request.user)[:10]  # Derniers 10 employés de l'utilisateur connecté
     
     if request.method == "POST":
         form = NetToGrossForm(request.POST)
@@ -66,6 +66,7 @@ def net_to_gross_view(request):
             try:
                 with transaction.atomic():
                     employee = Employee.objects.create(
+                        user=request.user,
                         nom_complet=nom_complet,
                         salaire_net=net_salary,
                         salaire_base=result['basic'],
@@ -98,7 +99,7 @@ def net_to_gross_view(request):
                     
                     messages.success(request, f"✅ Employé '{nom_complet}' ajouté avec succès !")
                     # Recharger la liste des employés
-                    employees = Employee.objects.all()[:10]
+                    employees = Employee.objects.filter(user=request.user)[:10]
                     
             except Exception as e:
                 messages.error(request, f"❌ Erreur lors de l'ajout : {str(e)}")
@@ -133,7 +134,7 @@ def net_to_gross_view(request):
 @login_required
 def export_excel_view(request):
     """Exporter la liste des employés en Excel"""
-    employees = Employee.objects.all()
+    employees = Employee.objects.filter(user=request.user)
     
     # Créer un nouveau classeur Excel
     wb = openpyxl.Workbook()
@@ -324,12 +325,33 @@ def export_excel_view(request):
 
 @login_required
 def delete_all_employees_view(request):
-    """Supprimer tous les employés"""
+    """Supprimer tous les employés de l'utilisateur connecté"""
     if request.method == "POST":
         try:
-            count = Employee.objects.count()
-            Employee.objects.all().delete()
+            count = Employee.objects.filter(user=request.user).count()
+            Employee.objects.filter(user=request.user).delete()
             messages.success(request, f"✅ {count} employé(s) supprimé(s) avec succès !")
+        except Exception as e:
+            messages.error(request, f"❌ Erreur lors de la suppression : {str(e)}")
+    
+    return redirect('index')
+
+@login_required
+def delete_selected_employees_view(request):
+    """Supprimer les employés sélectionnés de l'utilisateur connecté"""
+    if request.method == "POST":
+        try:
+            employee_ids = request.POST.getlist('employee_ids')
+            if not employee_ids:
+                messages.warning(request, "❌ Aucun employé sélectionné !")
+                return redirect('index')
+            
+            # Convertir les IDs en entiers et supprimer seulement les employés de l'utilisateur connecté
+            employee_ids = [int(id) for id in employee_ids if id.isdigit()]
+            count = Employee.objects.filter(id__in=employee_ids, user=request.user).count()
+            Employee.objects.filter(id__in=employee_ids, user=request.user).delete()
+            
+            messages.success(request, f"✅ {count} employé(s) sélectionné(s) supprimé(s) avec succès !")
         except Exception as e:
             messages.error(request, f"❌ Erreur lors de la suppression : {str(e)}")
     

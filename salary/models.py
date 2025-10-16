@@ -97,6 +97,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.save()
 
 class Employee(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Utilisateur", related_name="employees", null=True, blank=True)
     nom_complet = models.CharField(max_length=200, verbose_name="Nom complet de l'employé")
     date_creation = models.DateTimeField(default=timezone.now, verbose_name="Date de création")
     salaire_net = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Salaire net souhaité")
