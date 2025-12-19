@@ -122,6 +122,7 @@ class Employee(models.Model):
     indemnite_logement = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Indemnité de logement", default=0)
     indemnite_transport = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Indemnité de transport", default=0)
     indemnite_repas = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Indemnité de repas", default=0)
+    prime_responsabilite = models.DecimalField(max_digits=12, decimal_places=2,verbose_name="Prime de responsabilité (taxable)", default=0)
     primes_taxables = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Primes taxables")
     
     # Primes exonérées (non taxables)
@@ -129,7 +130,7 @@ class Employee(models.Model):
     prime_interim = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Prime d'intérim", default=0)
     prime_anciennete = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Prime d'ancienneté", default=0)
     primes_exonerees = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Total primes exonérées", default=0)
-    
+    avantage_nature = models.DecimalField(max_digits=12, decimal_places=2,verbose_name="Avantage en nature", default=0)
     ecart_imposable = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Écart imposable")
 
     class Meta:

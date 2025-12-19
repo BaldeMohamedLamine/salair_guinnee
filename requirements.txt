@@ -1,23 +1,11 @@
 # Django et dépendances principales
 Django==5.1.1
-Pillow==10.0.1
+Pillow>=11.0.0
 openpyxl==3.1.2
 
-# Base de données (PostgreSQL pour la production)
-psycopg2-binary==2.9.7
 
-# Serveur WSGI
-gunicorn==21.2.0
 
-# Variables d'environnement
-python-decouple==3.8
 
-# Sécurité
-django-cors-headers==4.3.1
-whitenoise==6.6.0
 
-# Monitoring et logging
-sentry-sdk[django]==1.38.0
 
-# Utilitaires
-python-dotenv==1.0.0
+

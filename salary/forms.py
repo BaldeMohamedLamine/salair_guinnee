@@ -90,6 +90,24 @@ class NetToGrossForm(forms.Form):
         widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'style': 'background-color: #f8f9fa;'})
     )
     
+    # Prime de responsabilité (exonérée) - activable par case à cocher
+    prime_responsabilite_exoneree = forms.BooleanField(
+        label="Prime de responsabilité",
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input exempt-prime', 'disabled': True})
+    )
+    
+    # Avantage en nature
+    avantage_nature = forms.DecimalField(
+        label="Avantage en nature",
+        min_value=0,
+        decimal_places=2,
+        max_digits=12,
+        required=False,
+        initial=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': "Entrez l'avantage en nature (si applicable)"})
+    )
+    
     
     # Déductions pour le salaire net à payer
     avance_salaire = forms.DecimalField(

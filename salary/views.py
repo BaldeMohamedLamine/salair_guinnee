@@ -26,17 +26,20 @@ def net_to_gross_view(request):
             prime_retraite = form.cleaned_data.get('prime_retraite', False)
             prime_interim = form.cleaned_data.get('prime_interim', False)
             prime_anciennete = form.cleaned_data.get('prime_anciennete', False)
+            prime_responsabilite_exoneree = form.cleaned_data.get('prime_responsabilite_exoneree', False)
+            avantage_nature = form.cleaned_data.get('avantage_nature', 0) or 0
             
             # Calculer automatiquement les primes taxables
             primes_auto = calculate_primes_automatiques(net_salary)
             
-            # Calculer le total des primes taxables
-            primes_taxables = (
+            # Calculer le total des primes taxables (sans prime de responsabilité qui est traitée comme exonérée)
+            primes_taxables_base = (
                 primes_auto['prime_cherte_vie'] +
                 primes_auto['indemnite_logement'] +
                 primes_auto['indemnite_transport'] +
                 primes_auto['indemnite_repas']
             )
+            primes_taxables = float(primes_taxables_base)
             
             # Calculer les primes exonérées si sélectionnées
             primes_exonerees = 0
@@ -49,17 +52,21 @@ def net_to_gross_view(request):
                     selected_primes.append('interim')
                 if prime_anciennete:
                     selected_primes.append('anciennete')
+                if prime_responsabilite_exoneree:
+                    selected_primes.append('responsabilite')
                 
                 exempt_primes_amounts = calculate_exempt_primes_amounts(net_salary, selected_primes)
                 primes_exonerees = sum(exempt_primes_amounts.values())
             
-            # Calculer sans avantages ni déductions (0 pour les deux)
+            # Calculer avec la nouvelle formule (incluant avantage en nature et primes sélectionnées)
             result = calculate_basic_from_net(
-                net_salary, 
+                net_salary,
                 0,  # Pas d'avantages généraux
-                0,  # Pas de déductions
+                0,  # Pas de déductions générales
                 primes_taxables,
-                primes_exonerees
+                primes_exonerees,
+                avantage_nature,
+                0  # Prime de responsabilité traitée comme exonérée (pas dans primes taxables)
             )
             
             # Sauvegarder automatiquement l'employé
@@ -89,7 +96,9 @@ def net_to_gross_view(request):
                         prime_retraite=exempt_primes_amounts.get('prime_retraite', 0),
                         prime_interim=exempt_primes_amounts.get('prime_interim', 0),
                         prime_anciennete=exempt_primes_amounts.get('prime_anciennete', 0),
+                        prime_responsabilite=exempt_primes_amounts.get('prime_responsabilite', 0),
                         primes_exonerees=primes_exonerees,
+                        avantage_nature=avantage_nature,
                         ecart_imposable=result['ecart_imposable'],
                         # Déductions pour le salaire net à payer
                         avance_salaire=form.cleaned_data.get('avance_salaire', 0),
@@ -120,13 +129,17 @@ def net_to_gross_view(request):
         context.update({
             "avance_salaire": form.cleaned_data.get('avance_salaire', 0),
             "saisie_opposition": form.cleaned_data.get('saisie_opposition', 0),
-            "salaire_net_a_payer": form.cleaned_data.get('salaire_net_a_payer', 0)
+            "salaire_net_a_payer": form.cleaned_data.get('salaire_net_a_payer', 0),
+            "prime_responsabilite": form.cleaned_data.get('prime_responsabilite_exoneree', False),
+            "avantage_nature": form.cleaned_data.get('avantage_nature', 0)
         })
     else:
         context.update({
             "avance_salaire": 0,
             "saisie_opposition": 0,
-            "salaire_net_a_payer": 0
+            "salaire_net_a_payer": 0,
+            "prime_responsabilite": 0,
+            "avantage_nature": 0
         })
     
     return render(request, "salary/index.html", context)
@@ -155,7 +168,8 @@ def export_excel_view(request):
         # 3. Toutes les primes (exonérées et non exonérées)
         "Prime Cherté de Vie", "Indemnité Logement", 
         "Indemnité Transport", "Indemnité Repas",
-        "Prime Retraite", "Prime Intérim", "Prime Ancienneté",
+        "Prime Retraite", "Prime Intérim", "Prime Ancienneté", "Prime de responsabilité",
+        "Avantage en nature",
         # 4. Salaire brut
         "Salaire Brut",
         # 5. CNSS employé et employeur
@@ -216,6 +230,12 @@ def export_excel_view(request):
         ws.cell(row=row, column=col, value=float(employee.prime_interim))
         col += 1
         ws.cell(row=row, column=col, value=float(employee.prime_anciennete))
+        col += 1
+        # Prime de responsabilité (exonérée)
+        ws.cell(row=row, column=col, value=float(getattr(employee, 'prime_responsabilite', 0)))
+        col += 1
+        # Avantage en nature
+        ws.cell(row=row, column=col, value=float(getattr(employee, 'avantage_nature', 0)))
         col += 1
         
         # 4. Salaire Brut

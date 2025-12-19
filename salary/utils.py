@@ -19,7 +19,8 @@ def calculate_exempt_primes_amounts(net_salary, selected_primes):
     amounts = {
         'prime_retraite': 0,
         'prime_interim': 0,
-        'prime_anciennete': 0
+        'prime_anciennete': 0,
+        'prime_responsabilite': 0,
     }
     
     if not selected_primes:
@@ -43,7 +44,8 @@ def calculate_exempt_primes_amounts(net_salary, selected_primes):
     coefficients = {
         'retraite': Decimal('1.2'),    # Prime de retraite légèrement plus élevée
         'interim': Decimal('0.8'),     # Prime d'intérim plus faible
-        'anciennete': Decimal('1.0')   # Prime d'ancienneté standard
+        'anciennete': Decimal('1.0'),  # Prime d'ancienneté standard
+        'responsabilite': Decimal('1.0')  # Prime de responsabilité par défaut
     }
     
     for prime in selected_primes:
@@ -53,6 +55,8 @@ def calculate_exempt_primes_amounts(net_salary, selected_primes):
             amounts['prime_interim'] = float(amount_per_prime * coefficients['interim'])
         elif prime == 'anciennete':
             amounts['prime_anciennete'] = float(amount_per_prime * coefficients['anciennete'])
+        elif prime == 'responsabilite':
+            amounts['prime_responsabilite'] = float(amount_per_prime * coefficients['responsabilite'])
     
     return amounts
 
@@ -227,7 +231,7 @@ def calculate_ecart_imposable(gross, primes_taxables):
 # 3️⃣ CALCUL DU NET À PARTIR DU SALAIRE DE BASE
 # =============================
 
-def calculate_net_from_basic(basic, advantages=0, ded=0, primes_taxables=0, primes_exonerees=0):
+def calculate_net_from_basic(basic, advantages=0, ded=0, primes_taxables=0, primes_exonerees=0, avantage_nature=0, prime_responsabilite=0):
     """
     Descend du BASIC vers le NET avec tous les calculs :
     1. Calcule le salaire brut
@@ -240,32 +244,37 @@ def calculate_net_from_basic(basic, advantages=0, ded=0, primes_taxables=0, prim
     ded = float(ded) if ded else 0.0
     primes_taxables = float(primes_taxables) if primes_taxables else 0.0
     primes_exonerees = float(primes_exonerees) if primes_exonerees else 0.0
+    avantage_nature = float(avantage_nature) if avantage_nature else 0.0
+    prime_responsabilite = float(prime_responsabilite) if prime_responsabilite else 0.0
 
-    # 1. Calcul du brut (salaire de base + primes taxables + primes exonérées)
-    gross = basic + advantages + primes_taxables + primes_exonerees
+    # 1. Primes taxables effectives (incluant la prime de responsabilité)
+    primes_taxables_effectives = primes_taxables + prime_responsabilite
 
-    # 2. Calcul CNSS employé
+    # 2. Calcul du brut (incluant avantage en nature)
+    gross = basic + advantages + primes_taxables_effectives + primes_exonerees + avantage_nature
+
+    # 3. Calcul CNSS employé
     cnss_employee = calculate_cnss_employee(gross)
 
-    # 3. Calcul écart imposable
-    ecart_imposable = calculate_ecart_imposable(gross, primes_taxables)
+    # 4. Calcul écart imposable sur le brut et les primes taxables effectives
+    ecart_imposable = calculate_ecart_imposable(gross, primes_taxables_effectives)
 
-    # 4. Base imposable = Brut - CNSS + Écart
-    imposable = gross - cnss_employee + ecart_imposable
+    # 5. Nouvelle base imposable (SI):
+    imposable = basic + primes_exonerees + avantage_nature + ecart_imposable - cnss_employee
 
-    # 5. Calcul RTS avec détail
+    # 6. Calcul RTS avec détail
     rts, rts_details = calculate_rts_detailed(imposable)
     rts = float(rts)  # Convertir Decimal en float pour la compatibilité
 
-    # 6. Calcul Net (les primes exonérées sont déjà incluses dans le brut)
+    # 7. Calcul Net (les primes exonérées et l'avantage en nature sont inclus dans le brut)
     net = gross - cnss_employee - rts - ded
 
-    # 7. Calculs côté employeur
+    # 8. Calculs côté employeur
     cnss_employer = calculate_cnss_employer(gross)
     versement_forfaitaire = calculate_versement_forfaitaire(gross)
     taxe_apprentissage = calculate_taxe_apprentissage(gross)
     
-    # 8. Totaux
+    # 9. Totaux
     total_cnss_patronal = versement_forfaitaire + taxe_apprentissage + cnss_employer
     total_charges_employee = cnss_employee + rts
 
@@ -283,8 +292,10 @@ def calculate_net_from_basic(basic, advantages=0, ded=0, primes_taxables=0, prim
         'imposable': imposable,
         'rts': rts,
         'rts_details': rts_details,
-        'primes_taxables': primes_taxables,
-        'primes_exonerees': primes_exonerees
+        'primes_taxables': primes_taxables_effectives,
+        'primes_exonerees': primes_exonerees,
+        'avantage_nature': avantage_nature,
+        'prime_responsabilite': prime_responsabilite,
     }
 
 
@@ -361,7 +372,7 @@ def calculate_avantages_et_deductions_automatiques(net_salary):
 # 5️⃣ REMONTER DU NET VERS LE BASIC
 # =============================
 
-def calculate_basic_from_net(target_net, advantages=0, ded=0, primes_taxables=0, primes_exonerees=0, tolerance=1):
+def calculate_basic_from_net(target_net, advantages=0, ded=0, primes_taxables=0, primes_exonerees=0, avantage_nature=0, prime_responsabilite=0, tolerance=1):
     """
     Retrouve le salaire de base qui permet d'obtenir un net donné.
     Utilise une recherche binaire pour être précis.
@@ -371,6 +382,8 @@ def calculate_basic_from_net(target_net, advantages=0, ded=0, primes_taxables=0,
     ded = float(ded) if ded else 0.0
     primes_taxables = float(primes_taxables) if primes_taxables else 0.0
     primes_exonerees = float(primes_exonerees) if primes_exonerees else 0.0
+    avantage_nature = float(avantage_nature) if avantage_nature else 0.0
+    prime_responsabilite = float(prime_responsabilite) if prime_responsabilite else 0.0
     tolerance = float(tolerance)
 
     low, high = 0, 100_000_000
@@ -378,7 +391,7 @@ def calculate_basic_from_net(target_net, advantages=0, ded=0, primes_taxables=0,
 
     while low <= high:
         mid = (low + high) / 2
-        result = calculate_net_from_basic(mid, advantages, ded, primes_taxables, primes_exonerees)
+        result = calculate_net_from_basic(mid, advantages, ded, primes_taxables, primes_exonerees, avantage_nature, prime_responsabilite)
         net = result['net']
 
         if abs(net - target_net) <= tolerance:
@@ -391,7 +404,7 @@ def calculate_basic_from_net(target_net, advantages=0, ded=0, primes_taxables=0,
             high = mid - 1
 
     # Calcul final avec tous les détails
-    result = calculate_net_from_basic(basic, advantages, ded, primes_taxables, primes_exonerees)
+    result = calculate_net_from_basic(basic, advantages, ded, primes_taxables, primes_exonerees, avantage_nature, prime_responsabilite)
     
     return {
         "basic": round(result['basic'], 2),
@@ -401,8 +414,10 @@ def calculate_basic_from_net(target_net, advantages=0, ded=0, primes_taxables=0,
         "rts": round(result['rts'], 2),
         "ecart_imposable": round(result['ecart_imposable'], 2),
         "advantages": round(advantages, 2),
-        "primes_taxables": round(primes_taxables, 2),
+        "primes_taxables": round(result['primes_taxables'], 2),
         "primes_exonerees": round(primes_exonerees, 2),
+        "avantage_nature": round(avantage_nature, 2),
+        "prime_responsabilite": round(prime_responsabilite, 2),
         "deductions": round(ded, 2),
         # Nouvelles données
         "cnss_employer": round(result['cnss_employer'], 2),
